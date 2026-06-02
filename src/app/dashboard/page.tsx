@@ -35,7 +35,7 @@ export default async function DashboardPage() {
         </div>
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))', gap: '2rem' }}>
-          {pastInterviews.map((interview) => (
+          {pastInterviews.map((interview: any) => (
             <div key={interview.id} className="glass-panel" style={{ padding: '2rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
                 <div>
