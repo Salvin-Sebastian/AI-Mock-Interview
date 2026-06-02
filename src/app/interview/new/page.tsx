@@ -8,7 +8,12 @@ export default function NewInterviewPage() {
         <p style={{ color: 'var(--text-secondary)' }}>Make sure you are in a quiet environment and your microphone is allowed.</p>
       </div>
       
-      <InterviewRoom />
+      <InterviewRoom 
+        interviewId="demo"
+        role="Software Engineer"
+        level="Mid-Level"
+        techStack="React, Next.js, TypeScript"
+      />
       
     </main>
   );
