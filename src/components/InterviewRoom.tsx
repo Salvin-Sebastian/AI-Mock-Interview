@@ -3,19 +3,31 @@
 import { useState, useEffect } from 'react';
 import Vapi from '@vapi-ai/web';
 import { Mic, MicOff, Phone, PhoneOff, Loader2 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 const vapi = new Vapi(process.env.NEXT_PUBLIC_VAPI_PUBLIC_KEY || 'dummy_key');
 
-export default function InterviewRoom() {
+interface Props {
+  interviewId: string;
+  role: string;
+  level: string;
+  techStack: string;
+}
+
+export default function InterviewRoom({ interviewId, role, level, techStack }: Props) {
   const [callStatus, setCallStatus] = useState<'idle' | 'loading' | 'active'>('idle');
   const [isMuted, setIsMuted] = useState(false);
   const [activeSpeaker, setActiveSpeaker] = useState<'user' | 'ai' | null>(null);
+  const router = useRouter();
 
   useEffect(() => {
     vapi.on('call-start', () => setCallStatus('active'));
-    vapi.on('call-end', () => setCallStatus('idle'));
+    vapi.on('call-end', () => {
+      setCallStatus('idle');
+      // Redirect to feedback page when call ends
+      router.push(`/interview/${interviewId}/feedback`);
+    });
     
-    // Listen for volume level to detect speaking
     vapi.on('volume-level', (volume) => {
       if (volume > 0.1) {
         setActiveSpeaker('user');
@@ -24,22 +36,26 @@ export default function InterviewRoom() {
       }
     });
 
-    // In a real scenario you can track AI speaking state through Vapi events
-    // For now we'll simulate it based on user silence occasionally
-    
     return () => {
       vapi.removeAllListeners();
       if (callStatus === 'active') {
         vapi.stop();
       }
     };
-  }, [callStatus]);
+  }, [callStatus, interviewId, router]);
 
   const startCall = async () => {
     setCallStatus('loading');
     const assistantId = process.env.NEXT_PUBLIC_VAPI_ASSISTANT_ID || 'dummy_assistant_id';
     try {
-      await vapi.start(assistantId);
+      // Pass dynamic overrides based on user setup
+      const assistantOverrides = {
+        name: "Expert Tech Interviewer",
+        systemPrompt: `You are an expert technical interviewer. You are interviewing a candidate for a ${level} ${role} position. The primary tech stack is ${techStack}. 
+        Keep your questions concise. Ask one question at a time. Evaluate their technical knowledge, problem-solving skills, and communication.`
+      };
+
+      await vapi.start(assistantId, assistantOverrides);
     } catch (err) {
       console.error('Failed to start call', err);
       alert('Failed to connect to Vapi. Please check your keys and Assistant ID.');
@@ -58,16 +74,15 @@ export default function InterviewRoom() {
   };
 
   return (
-    <div className="glass-panel" style={{ padding: '3rem', maxWidth: '800px', margin: '0 auto', textAlign: 'center' }}>
+    <div className="glass-panel" style={{ padding: '3rem', maxWidth: '800px', margin: '0 auto', textAlign: 'center', width: '100%' }}>
       
       <div style={{ marginBottom: '3rem' }}>
-        <h2 style={{ fontSize: '2rem', marginBottom: '1rem' }}>Live Interview Session</h2>
+        <h2 style={{ fontSize: '2rem', marginBottom: '1rem' }}>Live Session</h2>
         <p style={{ color: 'var(--text-secondary)' }}>
-          {callStatus === 'idle' ? 'Ready to begin your interview.' : 'Interview in progress.'}
+          {callStatus === 'idle' ? 'Ready to begin.' : 'Interview in progress.'}
         </p>
       </div>
 
-      {/* Visualizer Circle */}
       <div style={{ 
         width: '200px', 
         height: '200px', 
@@ -86,7 +101,6 @@ export default function InterviewRoom() {
           {callStatus === 'active' ? '🎙️' : '👤'}
         </div>
         
-        {/* Pulse animation when active */}
         {callStatus === 'active' && (
           <div style={{
             position: 'absolute',
@@ -106,7 +120,6 @@ export default function InterviewRoom() {
         }
       `}</style>
 
-      {/* Controls */}
       <div style={{ display: 'flex', gap: '1.5rem', justifyContent: 'center' }}>
         {callStatus === 'idle' ? (
           <button className="btn btn-primary" onClick={startCall} style={{ padding: '1rem 3rem', fontSize: '1.2rem', borderRadius: '50px' }}>

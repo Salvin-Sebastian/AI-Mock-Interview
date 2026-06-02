@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 
 export default function Home() {
   return (
@@ -19,12 +20,16 @@ export default function Home() {
         </p>
         
         <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', marginBottom: '5rem' }}>
-          <button className="btn btn-primary" style={{ padding: '1rem 2.5rem', fontSize: '1.1rem', borderRadius: '12px' }}>
-            Start Mock Interview
-          </button>
-          <button className="btn btn-secondary" style={{ padding: '1rem 2.5rem', fontSize: '1.1rem', borderRadius: '12px' }}>
-            View Dashboard
-          </button>
+          <Link href="/login">
+            <button className="btn btn-primary" style={{ padding: '1rem 2.5rem', fontSize: '1.1rem', borderRadius: '12px' }}>
+              Start Mock Interview
+            </button>
+          </Link>
+          <Link href="/login">
+            <button className="btn btn-secondary" style={{ padding: '1rem 2.5rem', fontSize: '1.1rem', borderRadius: '12px' }}>
+              View Dashboard
+            </button>
+          </Link>
         </div>
       </div>
 
