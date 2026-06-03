@@ -1,6 +1,28 @@
-import { createInterview } from '@/app/actions/interview'
+'use client';
+
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { createInterview } from '@/app/actions/interview';
 
 export default function SetupInterviewPage() {
+  const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false);
+
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setIsLoading(true);
+    
+    const formData = new FormData(e.currentTarget);
+    const res = await createInterview(formData);
+    
+    if (res?.error) {
+      alert("Error: " + res.error);
+      setIsLoading(false);
+    } else if (res?.success) {
+      router.push(`/interview/${res.interviewId}`);
+    }
+  }
+
   return (
     <main className="container animate-fade-in" style={{ padding: '6rem 2rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh' }}>
       
@@ -10,7 +32,7 @@ export default function SetupInterviewPage() {
           Tell us about the role you are applying for so the AI can tailor the questions.
         </p>
 
-        <form action={createInterview} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           
           <div>
             <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600 }}>Target Role</label>
@@ -45,8 +67,8 @@ export default function SetupInterviewPage() {
             />
           </div>
 
-          <button type="submit" className="btn btn-primary" style={{ padding: '1.25rem', marginTop: '1rem', fontSize: '1.1rem' }}>
-            Initialize AI Interviewer
+          <button type="submit" disabled={isLoading} className="btn btn-primary" style={{ padding: '1.25rem', marginTop: '1rem', fontSize: '1.1rem' }}>
+            {isLoading ? "Initializing..." : "Initialize AI Interviewer"}
           </button>
         </form>
       </div>

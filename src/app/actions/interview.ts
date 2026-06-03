@@ -5,29 +5,33 @@ import prisma from '@/lib/prisma'
 import { getCurrentUser } from './auth'
 
 export async function createInterview(formData: FormData) {
-  const user = await getCurrentUser()
-  if (!user) {
-    redirect('/login')
-  }
-
-  const role = formData.get('role') as string
-  const level = formData.get('level') as string
-  const techStack = formData.get('techStack') as string
-  // count is optional but nice to have in prompt later
-  
-  if (!role || !level || !techStack) {
-    throw new Error('All fields are required')
-  }
-
-  const interview = await prisma.interview.create({
-    data: {
-      userId: user.id,
-      role,
-      level,
-      techStack,
-      status: 'pending'
+  try {
+    const user = await getCurrentUser()
+    if (!user) {
+      return { error: "User not logged in" }
     }
-  })
 
-  redirect(`/interview/${interview.id}`)
+    const role = formData.get('role') as string
+    const level = formData.get('level') as string
+    const techStack = formData.get('techStack') as string
+    
+    if (!role || !level || !techStack) {
+      return { error: 'All fields are required' }
+    }
+
+    const interview = await prisma.interview.create({
+      data: {
+        userId: user.id,
+        role,
+        level,
+        techStack,
+        status: 'pending'
+      }
+    })
+
+    return { success: true, interviewId: interview.id }
+  } catch (error: any) {
+    console.error("Error creating interview:", error)
+    return { error: error.message || "Failed to create interview" }
+  }
 }
