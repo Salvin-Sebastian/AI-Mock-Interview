@@ -5,22 +5,27 @@ import prisma from '@/lib/prisma'
 import { redirect } from 'next/navigation'
 
 export async function loginAsGuest() {
-  const user = await prisma.user.create({
-    data: {
-      isGuest: true,
-      name: 'Guest User'
-    }
-  })
-  
-  const cookieStore = await cookies()
-  cookieStore.set('session_userid', user.id, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    maxAge: 60 * 60 * 24 * 7,
-    path: '/',
-  })
+  try {
+    const user = await prisma.user.create({
+      data: {
+        isGuest: true,
+        name: 'Guest User'
+      }
+    })
+    
+    const cookieStore = await cookies()
+    cookieStore.set('session_userid', user.id, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 60 * 60 * 24 * 7,
+      path: '/',
+    })
 
-  redirect('/dashboard')
+    return { success: true }
+  } catch (error: any) {
+    console.error("Error in loginAsGuest:", error);
+    return { error: error.message || "Failed to create guest user in database." }
+  }
 }
 
 // Replaced simple email login with Firebase Sync
