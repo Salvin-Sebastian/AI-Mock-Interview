@@ -67,11 +67,24 @@ export default function LoginPage() {
           <div style={{ flex: 1, height: '1px', background: 'var(--glass-border)' }}></div>
         </div>
 
-        <form action={loginAsGuest}>
-          <button type="submit" className="btn btn-secondary" style={{ width: '100%', padding: '1rem' }} disabled={isLoading}>
-            Continue as Guest
-          </button>
-        </form>
+        <button 
+          type="button"
+          onClick={async () => {
+            setIsLoading(true)
+            const res = await loginAsGuest()
+            if (res?.error) {
+              alert("Failed to login: " + res.error)
+              setIsLoading(false)
+            } else if (res?.success) {
+              router.push('/dashboard')
+            }
+          }}
+          className="btn btn-secondary" 
+          style={{ width: '100%', padding: '1rem' }} 
+          disabled={isLoading}
+        >
+          Continue as Guest
+        </button>
         <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginTop: '1rem' }}>
           Guest history is only saved temporarily on this device.
         </p>
