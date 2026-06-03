@@ -29,28 +29,33 @@ export async function syncFirebaseUser(uid: string, email: string | null, name: 
     return { error: 'Email is required from Firebase' }
   }
 
-  let user = await prisma.user.findUnique({ where: { email } })
-  
-  if (!user) {
-    user = await prisma.user.create({
-      data: {
-        id: uid, // Use Firebase UID
-        email,
-        name: name || email.split('@')[0],
-        isGuest: false
-      }
+  try {
+    let user = await prisma.user.findUnique({ where: { email } })
+    
+    if (!user) {
+      user = await prisma.user.create({
+        data: {
+          id: uid, // Use Firebase UID
+          email,
+          name: name || email.split('@')[0],
+          isGuest: false
+        }
+      })
+    }
+
+    const cookieStore = await cookies()
+    cookieStore.set('session_userid', user.id, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 60 * 60 * 24 * 7,
+      path: '/',
     })
+
+    return { success: true }
+  } catch (error: any) {
+    console.error("Error in syncFirebaseUser:", error);
+    return { error: error.message || "Failed to sync user with database." }
   }
-
-  const cookieStore = await cookies()
-  cookieStore.set('session_userid', user.id, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    maxAge: 60 * 60 * 24 * 7,
-    path: '/',
-  })
-
-  return { success: true }
 }
 
 export async function logout() {
