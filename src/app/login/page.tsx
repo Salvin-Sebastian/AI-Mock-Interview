@@ -4,9 +4,11 @@ import { loginAsGuest, syncFirebaseUser } from '@/app/actions/auth'
 import { auth } from '@/lib/firebase'
 import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth'
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 
 export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false)
+  const router = useRouter()
 
   const handleGoogleSignIn = async () => {
     setIsLoading(true)
@@ -15,11 +17,17 @@ export default function LoginPage() {
       const result = await signInWithPopup(auth, provider)
       
       // Pass the Firebase User data to our Server Action to sync with SQLite
-      await syncFirebaseUser(
+      const response = await syncFirebaseUser(
         result.user.uid, 
         result.user.email, 
         result.user.displayName
       )
+
+      if (response?.error) {
+        throw new Error(response.error)
+      }
+      
+      router.push('/dashboard')
     } catch (error: any) {
       console.error("Firebase Auth Error:", error)
       alert("Failed to sign in: " + error.message)

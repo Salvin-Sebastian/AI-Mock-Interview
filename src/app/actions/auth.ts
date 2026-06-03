@@ -50,7 +50,7 @@ export async function syncFirebaseUser(uid: string, email: string | null, name: 
     path: '/',
   })
 
-  redirect('/dashboard')
+  return { success: true }
 }
 
 export async function logout() {
