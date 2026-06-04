@@ -21,28 +21,33 @@ export default function InterviewRoom({ interviewId, role, level, techStack }: P
   const router = useRouter();
 
   useEffect(() => {
-    vapi.on('call-start', () => setCallStatus('active'));
-    vapi.on('call-end', () => {
+    const onCallStart = () => setCallStatus('active');
+    const onCallEnd = () => {
       setCallStatus('idle');
       // Redirect to feedback page when call ends
       router.push(`/interview/${interviewId}/feedback`);
-    });
-    
-    vapi.on('volume-level', (volume) => {
-      if (volume > 0.1) {
-        setActiveSpeaker('user');
-      } else {
-        setActiveSpeaker(null);
-      }
-    });
+    };
+    const onVolumeLevel = (volume: number) => {
+      setActiveSpeaker(volume > 0.1 ? 'user' : null);
+    };
+    const onError = (e: any) => {
+      console.error('Vapi error:', e);
+      setCallStatus('idle');
+    };
+
+    vapi.on('call-start', onCallStart);
+    vapi.on('call-end', onCallEnd);
+    vapi.on('volume-level', onVolumeLevel);
+    vapi.on('error', onError);
 
     return () => {
-      vapi.removeAllListeners();
-      if (callStatus === 'active') {
-        vapi.stop();
-      }
+      vapi.off('call-start', onCallStart);
+      vapi.off('call-end', onCallEnd);
+      vapi.off('volume-level', onVolumeLevel);
+      vapi.off('error', onError);
+      vapi.stop();
     };
-  }, [callStatus, interviewId, router]);
+  }, [interviewId, router]);
 
   const startCall = async () => {
     setCallStatus('loading');
