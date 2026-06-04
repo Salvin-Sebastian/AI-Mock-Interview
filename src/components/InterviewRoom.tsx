@@ -51,8 +51,13 @@ export default function InterviewRoom({ interviewId, role, level, techStack }: P
       // Pass dynamic overrides based on user setup
       const assistantOverrides = {
         name: "Expert Tech Interviewer",
-        systemPrompt: `You are an expert technical interviewer. You are interviewing a candidate for a ${level} ${role} position. The primary tech stack is ${techStack}. 
+        variableValues: {
+          level,
+          role,
+          techStack,
+          systemPrompt: `You are an expert technical interviewer. You are interviewing a candidate for a ${level} ${role} position. The primary tech stack is ${techStack}. 
         Keep your questions concise. Ask one question at a time. Evaluate their technical knowledge, problem-solving skills, and communication.`
+        }
       };
 
       await vapi.start(assistantId, assistantOverrides);
