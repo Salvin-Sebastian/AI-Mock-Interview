@@ -1,6 +1,7 @@
 import prisma from '@/lib/prisma';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
+import FeedbackLoader from '@/components/FeedbackLoader';
 
 export default async function FeedbackPage({ params }: { params: { id: string } }) {
   const { id } = await params;
@@ -9,8 +10,16 @@ export default async function FeedbackPage({ params }: { params: { id: string } 
     include: { feedback: true }
   });
 
-  if (!interview || !interview.feedback) {
+  if (!interview) {
     notFound();
+  }
+
+  if (!interview.feedback) {
+    return (
+      <main className="container animate-fade-in" style={{ padding: '4rem 2rem' }}>
+        <FeedbackLoader />
+      </main>
+    );
   }
 
   const { feedback } = interview;
