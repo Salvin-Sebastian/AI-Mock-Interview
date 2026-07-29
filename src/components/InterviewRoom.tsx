@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Vapi from '@vapi-ai/web';
-import { Mic, MicOff, Phone, PhoneOff, Loader2 } from 'lucide-react';
+import { Mic, MicOff, Phone, PhoneOff, Loader2, User } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 const vapi = new Vapi(process.env.NEXT_PUBLIC_VAPI_PUBLIC_KEY || 'dummy_key');
@@ -114,11 +114,27 @@ export default function InterviewRoom({ interviewId, role, level, techStack }: P
   return (
     <div className="glass-panel" style={{ padding: '3rem', maxWidth: '800px', margin: '0 auto', textAlign: 'center', width: '100%' }}>
       
-      <div style={{ marginBottom: '3rem' }}>
-        <h2 style={{ fontSize: '2rem', marginBottom: '1rem' }}>Live Session</h2>
-        <p style={{ color: 'var(--text-secondary)' }}>
-          {callStatus === 'idle' ? 'Ready to begin.' : 'Interview in progress.'}
-        </p>
+      <div style={{ marginBottom: '3rem', position: 'relative' }}>
+        <h2 style={{ fontSize: '2rem', marginBottom: '1rem', fontWeight: 800 }}>Live Session</h2>
+        
+        <div style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '8px',
+          background: callStatus === 'active' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(255,255,255,0.05)',
+          border: `1px solid ${callStatus === 'active' ? 'rgba(16, 185, 129, 0.4)' : 'var(--glass-border)'}`,
+          padding: '6px 16px',
+          borderRadius: '50px',
+          color: callStatus === 'active' ? 'var(--success)' : 'var(--text-secondary)',
+          fontSize: '0.9rem',
+          fontWeight: 600,
+          transition: 'all 0.3s ease'
+        }}>
+          {callStatus === 'active' && (
+            <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--success)', boxShadow: '0 0 10px var(--success)', animation: 'pulse-dot 2s infinite' }} />
+          )}
+          {callStatus === 'idle' ? 'Ready to begin.' : activeSpeaker === 'user' ? <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><Mic size={14} /> You are speaking...</span> : <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><Loader2 size={14} className="animate-spin" /> AI Listening...</span>}
+        </div>
       </div>
 
       <div style={{ 
@@ -126,35 +142,44 @@ export default function InterviewRoom({ interviewId, role, level, techStack }: P
         height: '200px', 
         borderRadius: '50%', 
         margin: '0 auto 4rem',
-        background: callStatus === 'active' ? 'rgba(108, 92, 231, 0.1)' : 'rgba(255,255,255,0.05)',
+        background: callStatus === 'active' ? 'rgba(176, 132, 255, 0.1)' : 'rgba(255,255,255,0.02)',
         border: `2px solid ${callStatus === 'active' ? 'var(--accent)' : 'var(--glass-border)'}`,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         position: 'relative',
-        transition: 'all 0.3s ease',
-        boxShadow: callStatus === 'active' && activeSpeaker ? '0 0 40px var(--accent-glow)' : 'none'
+        transition: 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)',
+        boxShadow: callStatus === 'active' && activeSpeaker ? '0 0 60px var(--accent-glow), inset 0 0 30px var(--accent-glow)' : 'none'
       }}>
-        <div style={{ fontSize: '4rem' }}>
-          {callStatus === 'active' ? '🎙️' : '👤'}
+        <div style={{ transition: 'transform 0.2s', transform: activeSpeaker ? 'scale(1.1)' : 'scale(1)' }}>
+          {callStatus === 'active' ? <Mic size={64} color="var(--accent)" /> : <User size={64} color="var(--text-secondary)" />}
         </div>
         
         {callStatus === 'active' && (
-          <div style={{
-            position: 'absolute',
-            inset: '-20px',
-            borderRadius: '50%',
-            border: '2px solid var(--accent-glow)',
-            animation: 'pulse 2s infinite',
-            opacity: activeSpeaker ? 1 : 0.2
-          }}></div>
+          <>
+            <div className="pulse-ring" style={{ animationDelay: '0s', opacity: activeSpeaker ? 0.8 : 0.2 }}></div>
+            <div className="pulse-ring" style={{ animationDelay: '0.6s', opacity: activeSpeaker ? 0.6 : 0.1 }}></div>
+            <div className="pulse-ring" style={{ animationDelay: '1.2s', opacity: activeSpeaker ? 0.4 : 0 }}></div>
+          </>
         )}
       </div>
 
       <style jsx>{`
-        @keyframes pulse {
-          0% { transform: scale(0.9); opacity: 1; }
-          100% { transform: scale(1.2); opacity: 0; }
+        .pulse-ring {
+          position: absolute;
+          inset: -2px;
+          border-radius: 50%;
+          border: 2px solid var(--accent-glow);
+          animation: pulse-ring 2s cubic-bezier(0.215, 0.610, 0.355, 1) infinite;
+        }
+        @keyframes pulse-ring {
+          0% { transform: scale(1); opacity: 0.8; }
+          100% { transform: scale(1.6); opacity: 0; }
+        }
+        @keyframes pulse-dot {
+          0% { opacity: 1; }
+          50% { opacity: 0.4; }
+          100% { opacity: 1; }
         }
       `}</style>
 
