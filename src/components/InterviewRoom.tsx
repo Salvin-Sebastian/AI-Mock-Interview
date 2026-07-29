@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Vapi from '@vapi-ai/web';
 import { Mic, MicOff, Phone, PhoneOff, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -19,32 +19,60 @@ export default function InterviewRoom({ interviewId, role, level, techStack }: P
   const [isMuted, setIsMuted] = useState(false);
   const [activeSpeaker, setActiveSpeaker] = useState<'user' | 'ai' | null>(null);
   const router = useRouter();
+  const transcriptRef = useRef('');
 
   useEffect(() => {
     const onCallStart = () => setCallStatus('active');
-    const onCallEnd = () => {
+    
+    const onCallEnd = async () => {
       setCallStatus('idle');
+      
+      // Send the accumulated transcript to our backend API
+      try {
+        await fetch('/api/generate-feedback', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            interviewId, 
+            transcript: transcriptRef.current || 'No transcript available.' 
+          })
+        });
+      } catch (err) {
+        console.error('Failed to generate feedback:', err);
+      }
+
       // Redirect to feedback page when call ends
       router.push(`/interview/${interviewId}/feedback`);
     };
+    
     const onVolumeLevel = (volume: number) => {
       setActiveSpeaker(volume > 0.1 ? 'user' : null);
     };
+    
     const onError = (e: any) => {
       console.error('Vapi error:', e);
       setCallStatus('idle');
+    };
+
+    const onMessage = (message: any) => {
+      if (message.type === 'transcript' && message.transcriptType === 'final') {
+        const prefix = message.role === 'user' ? 'Candidate' : 'Interviewer';
+        transcriptRef.current += `${prefix}: ${message.transcript}\n`;
+      }
     };
 
     vapi.on('call-start', onCallStart);
     vapi.on('call-end', onCallEnd);
     vapi.on('volume-level', onVolumeLevel);
     vapi.on('error', onError);
+    vapi.on('message', onMessage);
 
     return () => {
       vapi.off('call-start', onCallStart);
       vapi.off('call-end', onCallEnd);
       vapi.off('volume-level', onVolumeLevel);
       vapi.off('error', onError);
+      vapi.off('message', onMessage);
       vapi.stop();
     };
   }, [interviewId, router]);
