@@ -12,10 +12,19 @@ export default function LoginPage() {
 
   const handleGoogleSignIn = async () => {
     setIsLoading(true)
+    let result;
+    
     try {
       const provider = new GoogleAuthProvider()
-      const result = await signInWithPopup(auth, provider)
-      
+      result = await signInWithPopup(auth, provider)
+    } catch (error: any) {
+      console.error("Firebase Auth Error:", error)
+      alert("Failed to authenticate with Google: " + error.message)
+      setIsLoading(false)
+      return;
+    }
+
+    try {
       // Pass the Firebase User data to our Server Action to sync with SQLite
       const response = await syncFirebaseUser(
         result.user.uid, 
@@ -29,8 +38,8 @@ export default function LoginPage() {
       
       router.push('/dashboard')
     } catch (error: any) {
-      console.error("Firebase Auth Error:", error)
-      alert("Failed to sign in: " + error.message)
+      console.error("Database Sync Error:", error)
+      alert("Authenticated, but failed to sync user data: " + error.message)
       setIsLoading(false)
     }
   }

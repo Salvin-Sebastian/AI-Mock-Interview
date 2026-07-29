@@ -58,7 +58,13 @@ export async function syncFirebaseUser(uid: string, email: string | null, name: 
 
     return { success: true }
   } catch (error: any) {
-    console.error("Error in syncFirebaseUser:", error);
+    console.error("Database connection error in syncFirebaseUser:", error);
+    
+    // Check if the error indicates a connection issue with Supabase / Postgres
+    if (error.message && (error.message.includes('ENOTFOUND') || error.message.includes('tenant/user'))) {
+      return { error: "Database connection failed. Please check if your Supabase project is active and your DATABASE_URL is correct." }
+    }
+    
     return { error: error.message || "Failed to sync user with database." }
   }
 }
